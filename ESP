@@ -1,0 +1,73 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Function to create an outline for each part of the player's character
+local function createOutline(part)
+    local outline = Instance.new("BoxHandleAdornment")
+    outline.Adornee = part
+    outline.AlwaysOnTop = true
+    outline.ZIndex = 10
+    outline.Color3 = Color3.new(1, 0, 0) -- Red color
+    outline.Transparency = 0.5
+    outline.Size = part.Size
+    outline.Visible = true
+    outline.Parent = part
+    return outline
+end
+
+-- Function to create ESP for a player
+local function createESP(player)
+    if player == LocalPlayer then return end
+    local outlines = {}
+
+    local function onCharacterAdded(character)
+        for _, part in pairs(character:GetChildren()) do
+            if part:IsA("MeshPart") or part:IsA("Part") then
+                local outline = createOutline(part)
+                table.insert(outlines, outline)
+            end
+        end
+    end
+
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+    player.CharacterAdded:Connect(onCharacterAdded)
+
+    -- Clean up on character or player removal
+    local function cleanUp()
+        for _, outline in ipairs(outlines) do
+            if outline and outline.Parent then
+                outline:Destroy()
+            end
+        end
+    end
+    player.CharacterRemoving:Connect(cleanUp)
+    player.AncestryChanged:Connect(function(child, parent)
+        if not parent then
+            cleanUp()
+        end
+    end)
+end
+
+-- Connect for existing players and new players joining
+for _, player in pairs(Players:GetPlayers()) do
+    createESP(player)
+end
+Players.PlayerAdded:Connect(createESP)
+
+-- Remove ESP when script is destroyed
+local function onDestroy()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character then
+            for _, part in pairs(player.Character:GetChildren()) do
+                if part:IsA("MeshPart") or part:IsA("Part") and part:FindFirstChildOfClass("BoxHandleAdornment") then
+                    part:FindFirstChildOfClass("BoxHandleAdornment"):Destroy()
+                end
+            end
+        end
+    end
+end
+
+script.Destroying:Connect(onDestroy)
