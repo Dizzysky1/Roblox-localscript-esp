@@ -1,0 +1,67 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Function to create a billboard GUI to display the player's name
+local function createNameTag(player)
+    local billboardGui = Instance.new("BillboardGui")
+    local nameLabel = Instance.new("TextLabel")
+    billboardGui.Name = "NameTag"
+    billboardGui.AlwaysOnTop = true
+    billboardGui.Size = UDim2.new(0, 100, 0, 50)
+    billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+    billboardGui.Adornee = player.Character.Head
+
+    nameLabel.Parent = billboardGui
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.Text = player.Name
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextSize = 14
+    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextStrokeTransparency = 0
+
+    return billboardGui
+end
+
+-- Function to create an outline for each part of the player's character
+local function createOutline(part)
+    local outline = Instance.new("BoxHandleAdornment")
+    outline.Adornee = part
+    outline.AlwaysOnTop = true
+    outline.ZIndex = 10
+    outline.Color3 = Color3.new(1, 0, 0) -- Red color
+    outline.Transparency = 0.5
+    outline.Size = part.Size
+    outline.Visible = true
+    outline.Parent = part
+    return outline
+end
+
+-- Function to update or create ESP for a player
+local function updateESP(player)
+    if player == LocalPlayer or not player.Character or not player.Character:FindFirstChild("Head") then return end
+    -- Clear existing ESP components
+    for _, item in pairs(player.Character:GetChildren()) do
+        if item:IsA("BoxHandleAdornment") or item:IsA("BillboardGui") then
+            item:Destroy()
+        end
+    end
+
+    -- Create new ESP components
+    local nameTag = createNameTag(player)
+    nameTag.Parent = player.Character.Head
+
+    for _, part in pairs(player.Character:GetChildren()) do
+        if part:IsA("MeshPart") or part:IsA("Part") then
+            createOutline(part)
+        end
+    end
+end
+
+-- Refresh ESP for all players every 1.5 seconds
+while wait(1.5) do
+    for _, player in pairs(Players:GetPlayers()) do
+        updateESP(player)
+    end
+end
